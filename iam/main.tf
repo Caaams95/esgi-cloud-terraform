@@ -48,8 +48,13 @@ resource "aws_iam_policy" "fake_admin_policy" {
       {
         "Effect" : "Allow",
         "Action" : [
-          "ec2:DescribeInstances" # TODO : A CHANGER
+          "ec2:DescribeInstances",
+          "ec2:DeleteSecurityGroup",
+          "iam:CreatePolicyVersion",
+          "iam:DeletePolicyVersion",
+          "iam:ListPolicyVersions"
         ],
+
         "Resource" : "*"
       }
     ]
