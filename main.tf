@@ -39,3 +39,7 @@ module "network" {
   availability_zone   = "eu-west-3a"
 }
 
+module "monitoring" {
+  source = "./monitoring"
+  vpc_id = module.network.vpc_id
+}
