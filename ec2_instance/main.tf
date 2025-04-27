@@ -71,19 +71,38 @@ resource "aws_security_group" "kungfu_sg" {
   name        = "tf-${var.instance_name}-sg"
   description = "Allow SSH & HTTPS traffic from current ip"
   vpc_id      = var.vpc_id
+  depends_on  = [aws_vpc.custom_vpc]
+
+  // Règles entrantes
+  ingress {
+    description = "Allow HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   ingress {
-    description = "Allow all ingress"
-    from_port   = 0
-    to_port     = 65535
+    description = "Allow SSH"
+    from_port   = 22
+    to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["${var.my_ip}/32"]
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  // Règles sortantes
+  egress {
+    description = "Allow HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
-    description = "Allow all egress"
-    from_port   = 0
-    to_port     = 65535
+    description = "Allow SSH"
+    from_port   = 22
+    to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
