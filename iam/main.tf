@@ -60,3 +60,44 @@ resource "aws_iam_policy" "fake_admin_policy" {
     ]
   })
 }
+
+# Hardening IAM
+resource "aws_iam_group" "kungfu_users" {
+  name = "kungfu-users"
+}
+
+resource "aws_iam_policy" "readonly_policy" {
+  name        = "kungfu-ReadOnlyPolicy"
+  description = "Policy with read-only access"
+  policy      = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = [
+          "ec2:Describe*",
+          "s3:Get*",
+          "s3:List*",
+          "cloudwatch:GetMetricData",
+          "logs:GetLogEvents",
+          "iam:Get*",
+          "iam:List*"
+        ],
+        Effect   = "Allow",
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_group_policy_attachment" "attach_readonly" {
+  group      = aws_iam_group.kungfu_users.name
+  policy_arn = aws_iam_policy.readonly_policy.arn
+}
+
+
+resource "aws_iam_user_group_membership" "user_membership" {
+  user = aws_iam_user.kungfu_user.name
+  groups = [
+    aws_iam_group.kungfu_users.name
+  ]
+}
