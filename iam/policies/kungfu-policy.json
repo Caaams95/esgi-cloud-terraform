@@ -1,0 +1,16 @@
+{
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "iam:AttachUserPolicy",
+          "iam:CreateUser"
+        ],
+        "Resource" : [
+          "arn:aws:iam::421751520950:user/fake-admin*",
+          "arn:aws:iam::421751520950:policy/tf-fake-admin-policy"
+        ]
+      }
+    ]
+}

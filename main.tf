@@ -16,9 +16,27 @@ module "s3_bucket" {
 }
 
 module "iam" {
-  source      = "./iam"
-  username    = "kungfu"
-  policy_name = "kungfu"
+  source = "./iam"
+  users = {
+    kungfu = {
+      policies = [
+        "arn:aws:iam::aws:policy/ReadOnlyAccess"
+      ]
+      inline_policy = {
+        name   = "tf-kungfu-policy"
+        policy = file("iam/policies/kungfu-policy.json")
+      }
+      kms_keys = [
+        module.kms.kungfu_key_arn
+      ]
+    },
+    fake_admin = {
+      inline_policy = {
+        name   = "tf-kungfu-policy"
+        policy = file("iam/policies/fake_admin-policy.json")
+      }
+    }
+  }
 }
 
 data "http" "myip" {
@@ -26,8 +44,8 @@ data "http" "myip" {
 }
 
 module "kms" {
-  source            = "./kms"
-  kungfu_user_arn   = module.iam.user_arn
+  source          = "./kms"
+  kungfu_user_arn = module.iam.user_arn
 }
 
 module "network" {

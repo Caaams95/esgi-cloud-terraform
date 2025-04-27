@@ -1,103 +1,77 @@
-resource "aws_iam_user" "kungfu_user" {
-  name          = "tf-${var.username}-user"
+resource "aws_iam_user" "users" {
+  for_each = var.users
+
+  name          = each.key
   force_destroy = true
 }
 
-resource "aws_iam_access_key" "kungfu_access_key" {
-  user = aws_iam_user.kungfu_user.name
+resource "aws_iam_user_policy_attachment" "user_policies" {
+  depends_on = [aws_iam_user.users]
+  for_each = {
+    for item in flatten([
+      for user, conf in var.users : [
+        for policy in conf.policies : {
+          key    = "${user}-${basename(policy)}"
+          user   = user
+          policy = policy
+        }
+        if length(try(conf.policies, [])) > 0
+      ]
+    ]) : item.key => item
+  }
+
+  user       = each.value.user
+  policy_arn = each.value.policy
 }
 
-data "aws_iam_policy" "full_read_only_policy" {
-  name = "ReadOnlyAccess"
+resource "aws_iam_user_policy" "inline_policy" {
+  depends_on = [aws_iam_user.users]
+  for_each = {
+    for user, conf in var.users :
+    user => conf.inline_policy
+    if try(conf.inline_policy.name, null) != null
+  }
+
+  name   = each.value.name
+  user   = each.key
+  policy = each.value.policy
 }
 
-resource "aws_iam_policy_attachment" "attach_full_read_only" {
-  name       = "tf-attach-readonly"
-  users      = [aws_iam_user.kungfu_user.name]
-  policy_arn = data.aws_iam_policy.full_read_only_policy.arn
-}
 
-resource "aws_iam_user_policy" "kungfu_policy" {
-  name = "tf-${var.policy_name}-policy"
-  user = aws_iam_user.kungfu_user.name
+resource "aws_iam_user_policy" "kms_permissions" {
+  depends_on = [aws_iam_user.users]
+  for_each = {
+    for user, conf in var.users :
+    user => conf
+    if length(try(conf.kms_keys, [])) > 0
+  }
+
+  name = "AllowUserKMSAccess"
+  user = each.key
 
   policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Effect" : "Allow",
-        "Action" : [
-          "iam:AttachUserPolicy",
-          "iam:CreateUser"
-        ],
-        "Resource" : [
-          "arn:aws:iam::421751520950:user/fake-admin*",
-          "arn:aws:iam::421751520950:policy/tf-fake-admin-policy"
-        ]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_policy" "fake_admin_policy" {
-  name = "tf-fake-admin-policy"
-
-  policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Effect" : "Allow",
-        "Action" : [
-          "ec2:DescribeInstances",
-          "ec2:DeleteSecurityGroup",
-          "iam:CreatePolicyVersion",
-          "iam:DeletePolicyVersion",
-          "iam:ListPolicyVersions"
-        ],
-
-        "Resource" : "*"
-      }
-    ]
-  })
-}
-
-# Hardening IAM
-resource "aws_iam_group" "kungfu_users" {
-  name = "kungfu-users"
-}
-
-resource "aws_iam_policy" "readonly_policy" {
-  name        = "kungfu-ReadOnlyPolicy"
-  description = "Policy with read-only access"
-  policy      = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
+        Effect = "Allow",
         Action = [
-          "ec2:Describe*",
-          "s3:Get*",
-          "s3:List*",
-          "cloudwatch:GetMetricData",
-          "logs:GetLogEvents",
-          "iam:Get*",
-          "iam:List*"
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
         ],
-        Effect   = "Allow",
-        Resource = "*"
+        Resource = each.value.kms_keys
       }
     ]
   })
-}
 
-resource "aws_iam_group_policy_attachment" "attach_readonly" {
-  group      = aws_iam_group.kungfu_users.name
-  policy_arn = aws_iam_policy.readonly_policy.arn
 }
 
 
-resource "aws_iam_user_group_membership" "user_membership" {
-  user = aws_iam_user.kungfu_user.name
-  groups = [
-    aws_iam_group.kungfu_users.name
-  ]
+resource "aws_iam_access_key" "keys" {
+  depends_on = [aws_iam_user.users]
+  for_each   = var.users
+
+  user = each.key
 }

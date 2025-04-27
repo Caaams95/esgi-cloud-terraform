@@ -6,6 +6,26 @@ resource "random_id" "bucket_id" {
   byte_length = 4
 }
 
+##### CloudWatch #####
+resource "aws_cloudwatch_log_metric_filter" "cloudwatch_metric_error_count" {
+  name           = "cloudwatch_metric_error_count"
+  pattern        = "\"ERROR\""
+  log_group_name = aws_cloudwatch_log_group.cloudwatch_error_log_group.name
+
+  metric_transformation {
+    name      = "ErrorCount"
+    namespace = "errors"
+    value     = "1"
+    unit      = "Count"
+  }
+}
+
+resource "aws_cloudwatch_log_group" "cloudwatch_error_log_group" {
+  name = "errors/access.log"
+}
+
+##### CloudTrail #####
+
 # Bucket S3 pour logs CloudTrail
 resource "aws_s3_bucket" "cloudtrail_logs" {
   bucket        = "cloudtrail-logs-${random_id.bucket_id.hex}"
@@ -61,6 +81,8 @@ resource "aws_cloudtrail" "trail" {
 
   depends_on = [aws_s3_bucket_policy.cloudtrail_logs_policy]
 }
+
+##### VPC FlowLogs #####
 
 # Log group pour les VPC Flow Logs avec suffixe aléatoire
 resource "aws_cloudwatch_log_group" "vpc_flow" {
