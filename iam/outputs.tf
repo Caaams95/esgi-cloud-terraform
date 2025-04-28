@@ -1,20 +1,33 @@
-output "username" {
-  value = aws_iam_user.kungfu_user.name
+output "user_names" {
+  value = {
+    for user, key in aws_iam_user.users :
+    user => key.name
+  }
+  sensitive = true
 }
 
-output "access_key_id" {
-  value = aws_iam_access_key.kungfu_access_key.id
-}
-
-output "access_key_secret" {
-  value = aws_iam_access_key.kungfu_access_key.secret
-}
 output "user_arn" {
-  value = aws_iam_user.kungfu_user.arn
+  value = {
+    for user, key in aws_iam_user.users :
+    user => key.arn
+  }
+  sensitive = true
 }
 
-# Hardening IAM
-output "kungfu_user_name" {
-  description = "The name of the IAM user created"
-  value       = aws_iam_user.kungfu_user.name
+output "access_key_ids" {
+  description = "Access key ID for each IAM user"
+  value = {
+    for user, key in aws_iam_access_key.keys :
+    user => key.id
+  }
+  sensitive = true
+}
+
+output "access_key_secrets" {
+  description = "Secret access key for each IAM user"
+  value = {
+    for user, key in aws_iam_access_key.keys :
+    user => key.secret
+  }
+  sensitive = true
 }

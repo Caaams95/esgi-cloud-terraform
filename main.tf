@@ -8,11 +8,12 @@ module "ec2_instance" {
 }
 
 module "s3_bucket" {
+  depends_on                    = [module.iam]
   source                        = "./s3_bucket"
   bucket_name                   = "kungfu-cams"
-  very_secret_access_key_id     = module.iam.access_key_id
-  very_secret_access_key_secret = module.iam.access_key_secret
-  very_secret_username          = module.iam.username
+  very_secret_access_key_id     = module.iam.access_key_ids["kungfu"]
+  very_secret_access_key_secret = module.iam.access_key_secrets["kungfu"]
+  very_secret_username          = module.iam.user_names["kungfu"]
 }
 
 module "iam" {
@@ -45,7 +46,7 @@ data "http" "myip" {
 
 module "kms" {
   source          = "./kms"
-  kungfu_user_arn = module.iam.user_arn
+  kungfu_user_arn = module.iam.user_arn["kungfu"]
 }
 
 module "network" {
