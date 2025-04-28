@@ -6,6 +6,13 @@ locals {
   }
 }
 
+locals {
+  users_inline = {
+    for user, conf in var.users :
+    user => conf.inline_policy
+    if try(length(conf.inline_policy), 0) > 0
+  }
+}
 
 resource "aws_iam_user" "users" {
   for_each = var.users
@@ -35,7 +42,7 @@ resource "aws_iam_user_policy_attachment" "user_policies" {
 
 resource "aws_iam_user_policy" "inline_policy" {
   depends_on = [aws_iam_user.users]
-  for_each   = local.users_with_kms_keys
+  for_each   = local.users_inline
 
   name   = each.value.name
   user   = each.key
