@@ -1,3 +1,12 @@
+locals {
+  users_with_kms_keys = {
+    for user, conf in var.users :
+    user => conf
+    if try(length(conf.kms_keys), 0) > 0
+  }
+}
+
+
 resource "aws_iam_user" "users" {
   for_each = var.users
 
@@ -37,14 +46,9 @@ resource "aws_iam_user_policy_attachment" "user_policies" {
 #   policy = each.value.policy
 # }
 
-
 resource "aws_iam_user_policy" "kms_permissions" {
   depends_on = [aws_iam_user.users]
-  for_each = {
-    for user, conf in var.users :
-    user => conf
-    if length(try(conf.kms_keys, [])) > 0
-  }
+  for_each   = local.users_with_kms_keys
 
   name = "AllowUserKMSAccess"
   user = each.key
@@ -65,8 +69,8 @@ resource "aws_iam_user_policy" "kms_permissions" {
       }
     ]
   })
-
 }
+
 
 
 resource "aws_iam_access_key" "keys" {
