@@ -16,6 +16,30 @@ module "s3_bucket" {
   very_secret_username          = module.iam.user_names["kungfu"]
 }
 
+# module "iam" {
+#   source = "./iam"
+#   users = {
+#     kungfu = {
+#       policies = [
+#         "arn:aws:iam::aws:policy/ReadOnlyAccess"
+#       ]
+#       inline_policy = {
+#         name   = "tf-kungfu-policy"
+#         policy = file("iam/policies/kungfu-policy.json")
+#       }
+#       kms_keys = [
+#         module.kms.kungfu_key_arn
+#       ]
+#     },
+#     fake_admin = {
+#       inline_policy = {
+#         name   = "tf-kungfu-policy"
+#         policy = file("iam/policies/fake_admin-policy.json")
+#       }
+#     }
+#   }
+# }
+
 module "iam" {
   source = "./iam"
   users = {
@@ -23,19 +47,12 @@ module "iam" {
       policies = [
         "arn:aws:iam::aws:policy/ReadOnlyAccess"
       ]
-      inline_policy = {
-        name   = "tf-kungfu-policy"
-        policy = file("iam/policies/kungfu-policy.json")
-      }
       kms_keys = [
         module.kms.kungfu_key_arn
       ]
     },
     fake_admin = {
-      inline_policy = {
-        name   = "tf-kungfu-policy"
-        policy = file("iam/policies/fake_admin-policy.json")
-      }
+      
     }
   }
 }

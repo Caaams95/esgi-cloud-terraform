@@ -24,18 +24,18 @@ resource "aws_iam_user_policy_attachment" "user_policies" {
   policy_arn = each.value.policy
 }
 
-resource "aws_iam_user_policy" "inline_policy" {
-  depends_on = [aws_iam_user.users]
-  for_each = {
-    for user, conf in var.users :
-    user => conf.inline_policy
-    if try(conf.inline_policy.name, null) != null
-  }
+# resource "aws_iam_user_policy" "inline_policy" {
+#   depends_on = [aws_iam_user.users]
+#   for_each = {
+#     for user, conf in var.users :
+#     user => conf.inline_policy
+#     if try(conf.inline_policy.name, null) != null
+#   }
 
-  name   = each.value.name
-  user   = each.key
-  policy = each.value.policy
-}
+#   name   = each.value.name
+#   user   = each.key
+#   policy = each.value.policy
+# }
 
 
 resource "aws_iam_user_policy" "kms_permissions" {
